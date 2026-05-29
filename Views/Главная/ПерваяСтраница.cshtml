@@ -1,0 +1,218 @@
+@* ============================================================================
+   ПерваяСтраница.cshtml
+   Основное Razor-представление проекта.
+
+   Что делает файл:
+   1. Получает модель МодельДляСтрокиИзБазы из ГлавнаяController.
+   2. Отрисовывает учебную схему SignalR.
+   3. Отрисовывает таблицу PostgreSQL через partial ТаблицаPartialView.
+   4. Подключает signalr.min.js и пользовательский файл учебный-signalr.js.
+   ============================================================================ *@
+
+@using SignalRVisualizer.Models
+@using System.Text.Json
+
+@model МодельДляСтрокиИзБазы
+
+@{
+    // Защита на случай, если кто-то случайно вызовет View без модели.
+    // В нормальном потоке ГлавнаяController всегда передает model в View(model).
+    var модель = Model ?? new МодельДляСтрокиИзБазы();
+}
+
+<section class="страница">
+    <header class="шапка">
+        <div>
+            <p class="надпись-сверху">ASP.NET Core MVC .NET 8 + SignalR</p>
+            <h1>Визуализация работы SignalR</h1>
+            <p class="описание">
+                Таблица получает данные из PostgreSQL. Если SignalR таблицы включен,
+                она обновляется после уведомлений PostgreSQL LISTEN/NOTIFY. Кнопка «Обновить таблицу»
+                делает разовый запрос через SignalR даже без уведомления из БД.
+            </p>
+        </div>
+
+        @* Статус учебного Hub. Это отдельное соединение, не связанное напрямую с таблицей БД. *@
+        <div class="статус-подключения" id="статусПодключения">
+            <span class="лампочка лампочка-красная" id="лампочкаСтатуса"></span>
+            <span id="текстСтатуса">Не подключено</span>
+        </div>
+    </header>
+
+    @* Кнопки учебного Hub: нужны для понимания базового обмена клиент ↔ сервер. *@
+    <section class="панель-кнопок">
+        <button class="кнопка главная" id="кнопкаПодключиться">1. Подключиться к учебному Hub</button>
+        <button class="кнопка" id="кнопкаОтключиться" disabled>Отключиться</button>
+        <button class="кнопка" id="кнопкаЗапроситьВремя" disabled>Запросить время сервера</button>
+        <button class="кнопка опасная" id="кнопкаОчиститьЖурнал">Очистить журнал</button>
+    </section>
+
+    <section class="сетка">
+        <article class="карточка схема">
+            <div class="заголовок-карточки">
+                <h2>Схема взаимодействия</h2>
+                <p>При действиях на странице блоки подсвечиваются.</p>
+            </div>
+
+            @* data-step используется в JavaScript-функции подсветитьШаг(...). *@
+            <div class="схема-сигналр">
+                <div class="узел" data-step="browser">
+                    <strong>Браузер пользователя</strong>
+                    <span>HTML-страница MVC</span>
+                    <small>Views/Главная/ПерваяСтраница.cshtml</small>
+                </div>
+
+                <div class="стрелка">↓ start()</div>
+
+                <div class="узел" data-step="client">
+                    <strong>JavaScript клиент</strong>
+                    <span>Создает HubConnection</span>
+                    <small>wwwroot/js/учебный-signalr.js</small>
+                </div>
+
+                <div class="стрелка двусторонняя">↕ invoke / on</div>
+
+                <div class="узел" data-step="hub">
+                    <strong>SignalR Hub</strong>
+                    <span>Принимает вызовы клиента</span>
+                    <small>Hubs/УчебныйSignalRHub.cs и Hubs/ТаблицаSignalRHub.cs</small>
+                </div>
+
+                <div class="стрелка">↓ Clients.Group / Caller / All</div>
+
+                <div class="узел" data-step="clients">
+                    <strong>Клиенты страницы</strong>
+                    <span>Получают события сервера</span>
+                    <small>подключение.on(...)</small>
+                </div>
+
+                <div class="стрелка боковая">↘</div>
+
+                <div class="узел" data-step="service">
+                    <strong>Прослушка БД</strong>
+                    <span>PostgreSQL LISTEN/NOTIFY</span>
+                    <small>Services/ПрослушкаКаналовБД.cs</small>
+                </div>
+            </div>
+        </article>
+
+        <article class="карточка управление">
+            <div class="заголовок-карточки">
+                <h2>Проверка обмена</h2>
+                <p>Открой эту страницу в двух вкладках, чтобы увидеть рассылку всем клиентам.</p>
+            </div>
+
+            <label class="поле">
+                <span>Имя клиента</span>
+                <input id="имяПользователя" value="Клиент 1" />
+            </label>
+
+            <label class="поле">
+                <span>Сообщение</span>
+                <textarea id="текстСообщения" rows="4">Привет от браузера!</textarea>
+            </label>
+
+            <button class="кнопка главная широкая" id="кнопкаОтправитьСообщение" disabled>
+                Отправить сообщение через Hub всем клиентам
+            </button>
+
+            <label class="поле отступ-сверху">
+                <span>Команда для всех клиентов</span>
+                <input id="текстКоманды" value="Обновить таблицу на странице" />
+            </label>
+
+            <button class="кнопка широкая" id="кнопкаОтправитьКоманду" disabled>
+                Отправить команду всем клиентам
+            </button>
+        </article>
+    </section>
+
+    <section class="карточка-базы-данных">
+        <div class="заголовок-карточки">
+            <div>
+                <h2>Данные из PostgreSQL</h2>
+                <p>
+                    Таблица отрисовывается сразу при открытии страницы. Потом её можно обновлять вручную
+                    или автоматически через SignalR после уведомлений из БД.
+                </p>
+            </div>
+        </div>
+
+        @* Панель управления таблицей. Логику кнопок смотри в wwwroot/js/учебный-signalr.js. *@
+        <div class="панель-загрузки-бд">
+            <button id="кнопкаПоказатьДанныеИзБазы" type="button">Показать таблицу</button>
+            <button id="кнопкаСкрытьДанныеИзБазы" type="button">Скрыть таблицу</button>
+
+            <button id="кнопкаSignalRТаблицы" type="button" class="кнопка-signalr-таблицы">
+                Включить SignalR таблицы
+            </button>
+
+            <button id="кнопкаОбновитьТаблицу" type="button" class="кнопка-обновить-таблицу">
+                Обновить таблицу через SignalR
+            </button>
+        </div>
+
+        @* Статусы обновляются JavaScript-ом после partial-перерисовки. *@
+        <div class="статус-базы">
+            <div>Строк получено из базы: <span id="количествоСтрокТаблицы">@(модель.ЛистДляТаблицыИзБазы?.Count ?? 0)</span></div>
+            <div>Последняя загрузка: <span id="статусПоследнегоОбновленияТаблицы">@модель.ВремяПоследнейЗагрузки.ToString("dd.MM.yyyy HH:mm:ss")</span></div>
+            <div>SignalR таблицы: <span id="статусSignalRТаблицы">выключен</span></div>
+            @if (!string.IsNullOrWhiteSpace(модель.ОшибкаЗагрузки))
+            {
+                <div class="текст-ошибки-бд">Ошибка загрузки: @модель.ОшибкаЗагрузки</div>
+            }
+        </div>
+
+        <div id="блокТаблицыБазыДанных" class="блок-таблицы-базы-данных">
+            <div class="обертка-таблицы-базы-данных">
+                <table class="таблица-базы-данных">
+                    <thead>
+                        <tr>
+                            <th>N_ряда</th>
+                            <th>Прав_поток_номер_поковки</th>
+                            <th>Прав_поток_на_поддоне_количество</th>
+                            <th>Прав_поток_на_поддоне_ед_измерения</th>
+                            <th>Лев_поток_номер_поковки</th>
+                            <th>Лев_поток_на_поддоне_количество</th>
+                            <th>Лев_поток_на_поддоне_ед_измерения</th>
+                            <th>Старт</th>
+                        </tr>
+                    </thead>
+
+                    @* Именно этот tbody заменяется при AJAX/partial обновлении. *@
+                    <tbody id="Таблица">
+                        @await Html.PartialAsync("ТаблицаPartialView", модель)
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+
+    <section class="карточка журнал">
+        <div class="заголовок-карточки">
+            <h2>Живой журнал событий</h2>
+            <p>Здесь видно, какой шаг произошел: клиент → сервер → клиенты.</p>
+        </div>
+
+        <div class="таблица-журнала">
+            <div class="строка-журнала шапка-журнала">
+                <span>Время</span>
+                <span>Источник</span>
+                <span>Событие</span>
+            </div>
+            <div id="журналСобытий"></div>
+        </div>
+    </section>
+</section>
+
+@section Scripts {
+    <script>
+        // Передаем C#-константу канала в JavaScript безопасно через JSON-сериализацию.
+        // В JS появится строка: const каналСтраницы = "та_34898_n2_channel";
+        const каналСтраницы = @Html.Raw(JsonSerializer.Serialize(МодельДляОпределенияКаналов.Печь898Н2));
+    </script>
+
+    @* Сначала подключаем клиентскую библиотеку SignalR, потом наш код. *@
+    <script src="~/js/signalr.min.js"></script>
+    <script src="~/js/учебный-signalr.js" asp-append-version="true"></script>
+}

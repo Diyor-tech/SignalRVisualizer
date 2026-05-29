@@ -1,0 +1,27 @@
+<!-- ========================================================================
+     SignalRVisualizer.csproj
+     Файл проекта ASP.NET Core. Здесь указывается версия .NET, настройки C#
+     и NuGet-пакеты, которые нужны приложению.
+     ======================================================================== -->
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <!-- Проект сделан под ASP.NET Core / .NET 8. -->
+    <TargetFramework>net8.0</TargetFramework>
+
+    <!-- Включает nullable-анализ C#: string? означает, что значение может быть null. -->
+    <Nullable>enable</Nullable>
+
+    <!-- Включает неявные using-и .NET 8, чтобы не писать System, Linq и т.д. в каждом файле. -->
+    <ImplicitUsings>enable</ImplicitUsings>
+
+    <!-- Корневое пространство имен проекта. -->
+    <RootNamespace>SignalRVisualizer</RootNamespace>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Npgsql — официальный .NET-драйвер для подключения к PostgreSQL. -->
+    <PackageReference Include="Npgsql" Version="8.0.0" />
+  </ItemGroup>
+
+</Project>

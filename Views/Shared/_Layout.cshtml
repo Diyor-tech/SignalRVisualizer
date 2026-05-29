@@ -1,0 +1,26 @@
+@* ============================================================================
+   _Layout.cshtml
+   Общий HTML-каркас всех страниц MVC.
+   RenderBody() вставляет содержимое конкретной страницы, а секция Scripts
+   позволяет странице подключать свои JavaScript-файлы внизу body.
+   ============================================================================ *@
+
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Учебный SignalR</title>
+
+    @* asp-append-version добавляет версию файла к URL, чтобы браузер не держал старый CSS в кеше. *@
+    <link rel="stylesheet" href="~/css/учебный-signalr.css" asp-append-version="true" />
+</head>
+<body>
+    <main>
+        @RenderBody()
+    </main>
+
+    @* Сюда попадут скрипты, объявленные в @section Scripts конкретной страницы. *@
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>

@@ -1,0 +1,473 @@
+/* ============================================================================
+   учебный-signalr.css
+   Стили учебной страницы SignalR.
+
+   Файл разделен на блоки:
+   1. Цветовые переменные и базовая разметка.
+   2. Шапка и статусы подключения.
+   3. Карточки, схема SignalR и формы.
+   4. Журнал событий.
+   5. Таблица PostgreSQL.
+   6. Адаптация под узкие экраны.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   1. Общие переменные.
+   Переменные позволяют менять цветовую тему в одном месте.
+   --------------------------------------------------------------------------- */
+:root {
+    --фон: #f3f6fb;
+    --карточка: #ffffff;
+    --текст: #162033;
+    --приглушенный: #64748b;
+    --граница: #d8e0ec;
+    --синий: #2563eb;
+    --синий-темный: #1d4ed8;
+    --зеленый: #16a34a;
+    --желтый: #d97706;
+    --красный: #dc2626;
+    --тень: 0 18px 45px rgba(15, 23, 42, 0.08);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    margin: 0;
+    font-family: Arial, Helvetica, sans-serif;
+    background: radial-gradient(circle at top left, #dbeafe 0, transparent 34%), var(--фон);
+    color: var(--текст);
+}
+
+/* Основной контейнер страницы. min() не дает странице стать слишком широкой. */
+.страница {
+    width: min(1280px, calc(100% - 32px));
+    margin: 0 auto;
+    padding: 32px 0;
+}
+
+/* ---------------------------------------------------------------------------
+   2. Шапка и статусы подключения.
+   --------------------------------------------------------------------------- */
+.шапка {
+    display: flex;
+    justify-content: space-between;
+    gap: 24px;
+    align-items: flex-start;
+    margin-bottom: 22px;
+}
+
+.надпись-сверху {
+    margin: 0 0 8px;
+    color: var(--синий);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    font-size: 13px;
+}
+
+h1 {
+    margin: 0;
+    font-size: clamp(32px, 4vw, 54px);
+    line-height: 1;
+}
+
+.описание {
+    max-width: 780px;
+    color: var(--приглушенный);
+    font-size: 18px;
+    line-height: 1.55;
+}
+
+.статус-подключения {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 14px 16px;
+    background: var(--карточка);
+    border: 1px solid var(--граница);
+    border-radius: 18px;
+    box-shadow: var(--тень);
+    white-space: nowrap;
+    font-weight: 700;
+}
+
+.лампочка {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    display: inline-block;
+}
+
+.лампочка-красная {
+    background: var(--красный);
+    box-shadow: 0 0 0 6px rgba(220, 38, 38, 0.12);
+}
+
+.лампочка-зеленая {
+    background: var(--зеленый);
+    box-shadow: 0 0 0 6px rgba(22, 163, 74, 0.12);
+}
+
+.лампочка-желтая {
+    background: var(--желтый);
+    box-shadow: 0 0 0 6px rgba(217, 119, 6, 0.12);
+}
+
+/* ---------------------------------------------------------------------------
+   3. Кнопки, карточки, схема SignalR и поля ввода.
+   --------------------------------------------------------------------------- */
+.панель-кнопок {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.кнопка {
+    border: 0;
+    background: #e2e8f0;
+    color: var(--текст);
+    padding: 12px 16px;
+    border-radius: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s ease, background 0.15s ease, opacity 0.15s ease;
+}
+
+.кнопка:hover:not(:disabled) {
+    transform: translateY(-1px);
+}
+
+.кнопка:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+}
+
+.кнопка.главная {
+    background: var(--синий);
+    color: #ffffff;
+}
+
+.кнопка.главная:hover:not(:disabled) {
+    background: var(--синий-темный);
+}
+
+.кнопка.опасная {
+    background: #fee2e2;
+    color: #991b1b;
+}
+
+.кнопка.широкая {
+    width: 100%;
+}
+
+.сетка {
+    display: grid;
+    grid-template-columns: 1.2fr 0.8fr;
+    gap: 18px;
+    align-items: start;
+}
+
+.карточка {
+    background: rgba(255, 255, 255, 0.92);
+    border: 1px solid var(--граница);
+    border-radius: 28px;
+    padding: 22px;
+    box-shadow: var(--тень);
+}
+
+.заголовок-карточки {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    align-items: baseline;
+    margin-bottom: 18px;
+}
+
+.заголовок-карточки h2 {
+    margin: 0;
+    font-size: 24px;
+}
+
+.заголовок-карточки p {
+    margin: 0;
+    color: var(--приглушенный);
+}
+
+.схема-сигналр {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 10px;
+}
+
+.узел {
+    border: 2px solid var(--граница);
+    background: #f8fafc;
+    border-radius: 20px;
+    padding: 18px;
+    display: grid;
+    gap: 6px;
+    transition: transform 0.2s ease, border 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.узел strong {
+    font-size: 18px;
+}
+
+.узел span {
+    color: var(--текст);
+}
+
+.узел small {
+    color: var(--приглушенный);
+    font-family: Consolas, monospace;
+}
+
+/* Класс временно добавляет JavaScript, чтобы подсветить текущий шаг схемы. */
+.активный-узел {
+    border-color: var(--синий);
+    background: #eff6ff;
+    transform: scale(1.015);
+    box-shadow: 0 0 0 6px rgba(37, 99, 235, 0.12);
+}
+
+.стрелка {
+    text-align: center;
+    color: var(--приглушенный);
+    font-weight: 700;
+}
+
+.двусторонняя {
+    color: var(--синий);
+}
+
+.боковая {
+    color: var(--желтый);
+}
+
+.поле {
+    display: grid;
+    gap: 8px;
+    margin-bottom: 14px;
+    font-weight: 700;
+}
+
+.поле span {
+    color: var(--приглушенный);
+}
+
+input,
+textarea {
+    width: 100%;
+    border: 1px solid var(--граница);
+    border-radius: 14px;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--текст);
+    background: #f8fafc;
+    outline: none;
+}
+
+input:focus,
+textarea:focus {
+    border-color: var(--синий);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12);
+}
+
+.отступ-сверху {
+    margin-top: 22px;
+}
+
+/* ---------------------------------------------------------------------------
+   4. Журнал событий.
+   --------------------------------------------------------------------------- */
+.журнал {
+    margin-top: 18px;
+}
+
+.таблица-журнала {
+    overflow: hidden;
+    border: 1px solid var(--граница);
+    border-radius: 18px;
+}
+
+.строка-журнала {
+    display: grid;
+    grid-template-columns: 120px 240px 1fr;
+    gap: 12px;
+    padding: 12px 14px;
+    border-top: 1px solid var(--граница);
+    background: #ffffff;
+    align-items: start;
+}
+
+.строка-журнала:first-child {
+    border-top: 0;
+}
+
+.шапка-журнала {
+    background: #f1f5f9;
+    color: var(--приглушенный);
+    font-weight: 700;
+    border-top: 0;
+}
+
+/* ---------------------------------------------------------------------------
+   5. Карточка и таблица PostgreSQL.
+   Таблица может быть широкой, поэтому обернута в блок с горизонтальной прокруткой.
+   --------------------------------------------------------------------------- */
+.карточка-базы-данных {
+    margin-top: 24px;
+    padding: 20px;
+    border: 1px solid #d8dee9;
+    border-radius: 16px;
+    background: #ffffff;
+    box-shadow: 0 8px 24px rgba(15, 23, 42, 0.08);
+}
+
+.панель-загрузки-бд {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px;
+    margin-top: 16px;
+    margin-bottom: 16px;
+}
+
+.панель-загрузки-бд input {
+    width: 100px;
+    padding: 8px 10px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+}
+
+.панель-загрузки-бд button {
+    padding: 9px 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+}
+
+.панель-загрузки-бд button:hover {
+    background: #1d4ed8;
+}
+
+.статус-базы {
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    background: #f1f5f9;
+    color: #334155;
+    font-size: 14px;
+}
+
+.блок-таблицы-базы-данных {
+    width: 100%;
+    max-width: 100%;
+}
+
+.обертка-таблицы-базы-данных {
+    width: 100%;
+    max-width: 100%;
+    max-height: 420px;
+    overflow-x: auto;
+    overflow-y: auto;
+    border: 1px solid #d8dee9;
+    border-radius: 12px;
+    background: #ffffff;
+}
+
+.таблица-базы-данных {
+    width: max-content;
+    min-width: 100%;
+    border-collapse: collapse;
+    table-layout: auto;
+    font-size: 14px;
+    margin-top: 8px;
+}
+
+.таблица-базы-данных th,
+.таблица-базы-данных td {
+    border: 1px solid #d8dee9;
+    padding: 10px 12px;
+    text-align: left;
+    vertical-align: top;
+    white-space: nowrap;
+}
+
+/* sticky-заголовок остается сверху при вертикальной прокрутке таблицы. */
+.таблица-базы-данных th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+.таблица-базы-данных tbody tr:nth-child(even) {
+    background: #f8fafc;
+}
+
+.таблица-базы-данных tbody tr:hover {
+    background: #eef6ff;
+}
+
+.кнопка-signalr-таблицы {
+    background: #0f766e !important;
+}
+
+.кнопка-обновить-таблицу {
+    background: #7c3aed !important;
+}
+
+.статус-signalr-таблицы {
+    font-weight: 700;
+}
+
+.статус-зеленый {
+    color: var(--зеленый);
+}
+
+.статус-желтый {
+    color: var(--желтый);
+}
+
+.статус-красный {
+    color: var(--красный);
+}
+
+.текст-ошибки-бд,
+.строка-ошибки-бд td {
+    color: #991b1b;
+    background: #fee2e2;
+    font-weight: 700;
+}
+
+.строка-пустой-бд td {
+    color: #475569;
+    background: #f8fafc;
+    font-weight: 700;
+}
+
+/* ---------------------------------------------------------------------------
+   6. Адаптация под маленькие экраны.
+   --------------------------------------------------------------------------- */
+@media (max-width: 900px) {
+    .шапка,
+    .заголовок-карточки {
+        flex-direction: column;
+    }
+
+    .сетка {
+        grid-template-columns: 1fr;
+    }
+
+    .строка-журнала {
+        grid-template-columns: 1fr;
+    }
+}
